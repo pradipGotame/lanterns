@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Manager</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ─── Layout ───────────────────────────────────────── */
+    .app-wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ─── Header ───────────────────────────────────────── */
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .app-logo {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .app-title { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; }
+    .app-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+    /* ─── Project Creator ──────────────────────────────── */
+    .creator-card {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .creator-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+    }
+    .creator-row {
+      display: flex;
+      gap: 10px;
+    }
+    .creator-input {
+      flex: 1;
+      background: #0f1117;
+      border: 1.5px solid #2d3148;
+      border-radius: 9px;
+      padding: 11px 16px;
+      font-size: 15px;
+      color: #e2e8f0;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .creator-input:focus { border-color: #6366f1; }
+    .creator-input::placeholder { color: #475569; }
+    .btn-create {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 11px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn-create:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-create:active { transform: translateY(0); }
+
+    /* ─── Project List Header ──────────────────────────── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 16px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #475569;
+      font-size: 15px;
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* ─── Project Card ─────────────────────────────────── */
+    .project-card {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .project-card.expanded { border-color: #4f46e5; }
+
+    .project-header {
+      display: flex;
+      align-items: center;
+      padding: 18px 22px;
+      cursor: pointer;
+      user-select: none;
+      gap: 12px;
+    }
+    .project-header:hover { background: #232640; }
+
+    .project-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #4f46e5;
+      flex-shrink: 0;
+    }
+    .project-name {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .project-badge {
+      font-size: 11px;
+      background: #1a1f35;
+      border: 1px solid #2d3148;
+      color: #64748b;
+      border-radius: 20px;
+      padding: 2px 10px;
+    }
+    .chevron {
+      font-size: 14px;
+      color: #475569;
+      transition: transform 0.25s;
+    }
+    .project-card.expanded .chevron { transform: rotate(180deg); }
+
+    .btn-delete-project {
+      background: none;
+      border: none;
+      color: #475569;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: color 0.2s, background 0.2s;
+    }
+    .btn-delete-project:hover { color: #ef4444; background: #2d1a1a; }
+
+    /* ─── Project Body ─────────────────────────────────── */
+    .project-body {
+      border-top: 1px solid #2d3148;
+      padding: 22px;
+    }
+
+    /* ─── Tab Bar ──────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      background: #0f1117;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #64748b;
+      padding: 9px 12px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .tab-btn:hover { color: #94a3b8; }
+    .tab-btn.active {
+      background: #1e2130;
+      color: #e2e8f0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .tab-icon { font-size: 15px; }
+    .tab-count {
+      background: #2d3148;
+      color: #94a3b8;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 6px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .tab-btn.active .tab-count { background: #4f46e5; color: #fff; }
+
+    /* ─── File Upload Area ─────────────────────────────── */
+    .upload-zone {
+      border: 2px dashed #2d3148;
+      border-radius: 10px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 16px;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #6366f1;
+      background: #1a1d2e;
+    }
+    .upload-icon { font-size: 30px; margin-bottom: 8px; }
+    .upload-title { font-size: 14px; font-weight: 600; color: #94a3b8; }
+    .upload-sub { font-size: 12px; color: #475569; margin-top: 4px; }
+    .upload-sub span { color: #6366f1; font-weight: 600; }
+
+    /* ─── File List ────────────────────────────────────── */
+    .file-list { display: flex; flex-direction: column; gap: 8px; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 10px 14px;
+      gap: 12px;
+      animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .file-icon { font-size: 20px; flex-shrink: 0; }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-size { font-size: 11px; color: #475569; margin-top: 2px; }
+    .btn-delete-file {
+      background: none;
+      border: none;
+      color: #475569;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: color 0.2s, background 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-delete-file:hover { color: #ef4444; background: #2d1a1a; }
+
+    /* ─── Start Button ─────────────────────────────────── */
+    .start-section {
+      margin-top: 24px;
+      border-top: 1px solid #2d3148;
+      padding-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .start-info { font-size: 13px; color: #475569; }
+    .start-info strong { color: #94a3b8; }
+    .btn-start {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+      white-space: nowrap;
+    }
+    .btn-start:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
+    .btn-start:active { transform: translateY(0); }
+    .btn-start:disabled {
+      background: #1e2130;
+      color: #475569;
+      cursor: not-allowed;
+      box-shadow: none;
+      opacity: 1;
+    }
+    .btn-start.loading {
+      background: #1e2130;
+      color: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-start .pulse {
+      width: 8px; height: 8px;
+      background: #fff;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%       { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    /* ─── Toast ────────────────────────────────────────── */
+    .toast-wrapper {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1000;
+    }
+    .toast {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #e2e8f0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      animation: toastIn 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 360px;
+    }
+    .toast.success { border-color: #10b981; }
+    .toast.error   { border-color: #ef4444; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Scrollbar ────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 4px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useRef, useCallback, useEffect } = React;
+
+/* ══════════════════════════════════════════════════════
+   UTILITY HELPERS
+══════════════════════════════════════════════════════ */
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function fileIcon(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const map = {
+    pdf: '📄', doc: '📝', docx: '📝', txt: '📃',
+    js: '🟨',  ts: '🔷',  jsx: '⚛️', tsx: '⚛️',
+    py: '🐍',  java: '☕', cpp: '⚙️', c: '⚙️', h: '⚙️',
+    json: '📋', yaml: '📋', yml: '📋', xml: '📋',
+    png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', svg: '🎨',
+    zip: '🗜️', tar: '🗜️', gz: '🗜️',
+    md: '📘',  csv: '📊', xlsx: '📊', xls: '📊',
+  };
+  return map[ext] || '📎';
+}
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+const BACKEND_URL = 'http://localhost:5000/api/projects/start';
+
+/* ══════════════════════════════════════════════════════
+   TOAST HOOK + COMPONENT
+══════════════════════════════════════════════════════ */
+function useToast() {
+  const [toasts, setToasts] = useState([]);
+  const show = useCallback((message, type = 'success', icon = '✅') => {
+    const id = uid();
+    setToasts(prev => [...prev, { id, message, type, icon }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+  }, []);
+  return { toasts, show };
+}
+
+function ToastContainer({ toasts }) {
+  return (
+    <div className="toast-wrapper">
+      {toasts.map(t => (
+        <div key={t.id} className={`toast ${t.type}`}>
+          <span>{t.icon}</span>
+          <span>{t.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   FILE UPLOAD AREA
+══════════════════════════════════════════════════════ */
+function FileUploadArea({ files, onUpload, onDelete, tabKey }) {
+  const inputRef = useRef();
+  const [dragover, setDragover] = useState(false);
+
+  const handleFiles = (fileList) => {
+    const newFiles = Array.from(fileList).map(f => ({
+      id: uid(),
+      name: f.name,
+      size: f.size,
+      type: f.type,
+      raw: f,
+    }));
+    if (newFiles.length) onUpload(tabKey, newFiles);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragover(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  return (
+    <div>
+      <div
+        className={`upload-zone${dragover ? ' dragover' : ''}`}
+        onClick={() => inputRef.current.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragover(true); }}
+        onDragLeave={() => setDragover(false)}
+        onDrop={handleDrop}
+      >
+        <div className="upload-icon">📂</div>
+        <div className="upload-title">Drop files here or <span style={{color:'#6366f1'}}>browse</span></div>
+        <div className="upload-sub">Any file type accepted • <span>Click to select</span></div>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          style={{ display: 'none' }}
+          onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
+        />
+      </div>
+
+      {files.length > 0 && (
+        <div className="file-list">
+          {files.map(file => (
+            <div key={file.id} className="file-item">
+              <span className="file-icon">{fileIcon(file.name)}</span>
+              <div className="file-info">
+                <div className="file-name" title={file.name}>{file.name}</div>
+                <div className="file-size">{formatBytes(file.size)}</div>
+              </div>
+              <button
+                className="btn-delete-file"
+                onClick={() => onDelete(tabKey, file.id)}
+                title="Remove file"
+              >✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   TAB BAR
+══════════════════════════════════════════════════════ */
+const TABS = [
+  { key: 'requirement', label: 'Requirement', icon: '📋' },
+  { key: 'test',        label: 'Test',        icon: '🧪' },
+  { key: 'code',        label: 'Code',        icon: '💻' },
+];
+
+function TabBar({ activeTab, files, onSelect }) {
+  return (
+    <div className="tab-bar">
+      {TABS.map(tab => (
+        <button
+          key={tab.key}
+          className={`tab-btn${activeTab === tab.key ? ' active' : ''}`}
+          onClick={() => onSelect(tab.key)}
+        >
+          <span className="tab-icon">{tab.icon}</span>
+          {tab.label}
+          <span className="tab-count">{(files[tab.key] || []).length}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   START BUTTON
+══════════════════════════════════════════════════════ */
+function StartButton({ project, onStart, loading }) {
+  const totalFiles = TABS.reduce((sum, t) => sum + (project.files[t.key] || []).length, 0);
+  const canStart = totalFiles > 0 && !loading;
+
+  return (
+    <div className="start-section">
+      <div className="start-info">
+        {loading
+          ? <><strong>Sending</strong> files to backend…</>
+          : canStart
+            ? <><strong>{totalFiles}</strong> file{totalFiles !== 1 ? 's' : ''} ready across all sections</>
+            : <>Upload files to at least one section before starting</>
+        }
+      </div>
+      <button
+        className={`btn-start${loading ? ' loading' : ''}`}
+        disabled={!canStart}
+        onClick={() => onStart(project)}
+      >
+        {canStart && !loading && <div className="pulse" />}
+        {loading ? '⏳ Sending…' : '▶ Start Project'}
+      </button>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   PROJECT CARD
+══════════════════════════════════════════════════════ */
+function ProjectCard({ project, onDelete, onUpload, onDeleteFile, onStart, loadingId }) {
+  const [expanded, setExpanded] = useState(true);
+  const [activeTab, setActiveTab] = useState('requirement');
+  const totalFiles = TABS.reduce((sum, t) => sum + (project.files[t.key] || []).length, 0);
+  const isLoading = loadingId === project.id;
+
+  return (
+    <div className={`project-card${expanded ? ' expanded' : ''}`}>
+      <div className="project-header" onClick={() => setExpanded(e => !e)}>
+        <div className="project-dot" />
+        <span className="project-name">{project.name}</span>
+        <span className="project-badge">{totalFiles} file{totalFiles !== 1 ? 's' : ''}</span>
+        <button
+          className="btn-delete-project"
+          title="Delete project"
+          onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+        >🗑</button>
+        <span className="chevron">▼</span>
+      </div>
+
+      {expanded && (
+        <div className="project-body">
+          <TabBar activeTab={activeTab} files={project.files} onSelect={setActiveTab} />
+          <FileUploadArea
+            tabKey={activeTab}
+            files={project.files[activeTab] || []}
+            onUpload={(tabKey, files) => onUpload(project.id, tabKey, files)}
+            onDelete={(tabKey, fileId) => onDeleteFile(project.id, tabKey, fileId)}
+          />
+          <StartButton project={project} onStart={onStart} loading={isLoading} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   PROJECT CREATOR
+══════════════════════════════════════════════════════ */
+function ProjectCreator({ onCreate }) {
+  const [name, setName] = useState('');
+
+  const handleCreate = () => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    onCreate(trimmed);
+    setName('');
+  };
+
+  return (
+    <div className="creator-card">
+      <div className="creator-label">New Project</div>
+      <div className="creator-row">
+        <input
+          className="creator-input"
+          type="text"
+          placeholder="Enter project name…"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleCreate()}
+          autoFocus
+        />
+        <button className="btn-create" onClick={handleCreate}>+ Create</button>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   APP (ROOT)
+══════════════════════════════════════════════════════ */
+function App() {
+  const [projects, setProjects] = useState([]);
+  const [loadingId, setLoadingId] = useState(null);
+  const { toasts, show: showToast } = useToast();
+
+  /* ── Create ── */
+  const handleCreate = useCallback((name) => {
+    const newProject = {
+      id: uid(),
+      name,
+      files: { requirement: [], test: [], code: [] },
+      createdAt: Date.now(),
+    };
+    setProjects(prev => [newProject, ...prev]);
+    showToast(`Project "${name}" created`, 'success', '🚀');
+  }, [showToast]);
+
+  /* ── Delete project ── */
+  const handleDeleteProject = useCallback((projectId) => {
+    setProjects(prev => {
+      const p = prev.find(x => x.id === projectId);
+      if (p) showToast(`Project "${p.name}" deleted`, 'error', '🗑');
+      return prev.filter(x => x.id !== projectId);
+    });
+  }, [showToast]);
+
+  /* ── Upload files ── */
+  const handleUpload = useCallback((projectId, tabKey, newFiles) => {
+    setProjects(prev => prev.map(p =>
+      p.id !== projectId ? p : {
+        ...p,
+        files: { ...p.files, [tabKey]: [...(p.files[tabKey] || []), ...newFiles] },
+      }
+    ));
+    showToast(`${newFiles.length} file${newFiles.length !== 1 ? 's' : ''} added`, 'success', '📁');
+  }, [showToast]);
+
+  /* ── Delete file ── */
+  const handleDeleteFile = useCallback((projectId, tabKey, fileId) => {
+    setProjects(prev => prev.map(p =>
+      p.id !== projectId ? p : {
+        ...p,
+        files: { ...p.files, [tabKey]: (p.files[tabKey] || []).filter(f => f.id !== fileId) },
+      }
+    ));
+    showToast('File removed', 'error', '✕');
+  }, [showToast]);
+
+  /* ── Start (POST to backend) ── */
+  const handleStart = useCallback(async (project) => {
+    setLoadingId(project.id);
+    try {
+      const formData = new FormData();
+      formData.append('projectName', project.name);
+      formData.append('projectId', project.id);
+
+      TABS.forEach(({ key, label }) => {
+        (project.files[key] || []).forEach((file, idx) => {
+          formData.append(`${label}_${idx}`, file.raw, file.name);
+        });
+      });
+
+      const res = await fetch(BACKEND_URL, { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        showToast(
+          `"${project.name}" started! (${data.stats?.totalFiles ?? '?'} files received)`,
+          'success', '✅'
+        );
+      } else {
+        showToast(`Backend error ${res.status}. Is the server running?`, 'error', '❌');
+      }
+    } catch (err) {
+      console.error('[Start]', err);
+      showToast('Cannot reach backend at localhost:5000. Run: node server.js', 'error', '❌');
+    } finally {
+      setLoadingId(null);
+    }
+  }, [showToast]);
+
+  return (
+    <div className="app-wrapper">
+      {/* Header */}
+      <div className="app-header">
+        <div className="app-logo">🗂</div>
+        <div>
+          <div className="app-title">Project Manager</div>
+          <div className="app-subtitle">Manage requirements, tests &amp; code in one place</div>
+        </div>
+      </div>
+
+      {/* Creator */}
+      <ProjectCreator onCreate={handleCreate} />
+
+      {/* Project list */}
+      <div className="section-title">
+        {projects.length > 0
+          ? `${projects.length} Project${projects.length !== 1 ? 's' : ''}`
+          : 'Projects'
+        }
+      </div>
+
+      {projects.length === 0 ? (
+        <div className="empty-state">
+          <div className="icon">📭</div>
+          No projects yet. Create your first one above!
+        </div>
+      ) : (
+        projects.map(project => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            onDelete={handleDeleteProject}
+            onUpload={handleUpload}
+            onDeleteFile={handleDeleteFile}
+            onStart={handleStart}
+            loadingId={loadingId}
+          />
+        ))
+      )}
+
+      <ToastContainer toasts={toasts} />
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

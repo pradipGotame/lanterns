@@ -1,0 +1,15 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+chromadb
+flashrank
+numpy
+openai
+pydantic
+python-dotenv
+tqdm
+tiktoken
+langchain>=0.2.0
+langchain-text-splitters>=0.2.0
+langchain-openai>=0.1.0
+langchain-community>=0.2.0

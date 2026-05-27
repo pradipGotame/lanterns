@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens — light mode ────────────────────────── */
+:root {
+  --bg:         #f6f8fa;
+  --surface-1:  #ffffff;
+  --surface-2:  #f0f2f5;
+  --surface-3:  #e1e4e8;
+  --border:     #d0d7de;
+  --accent:     #6366f1;
+  --accent-2:   #4f46e5;
+  --accent-dim: rgba(99,102,241,.10);
+  --text-1:     #1f2328;
+  --text-2:     #57606a;
+  --text-3:     #8c959f;
+  --green:      #1a7f37;
+  --red:        #cf222e;
+  --yellow:     #9a6700;
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fu-theme-scope {
+  transition: filter 160ms ease;
+}
+
+/* Dark mode fallback for the inline-styled UI */
+html[data-theme="dark"] body {
+  background: #0b1220;
+}
+
+html[data-theme="dark"] .fu-theme-scope {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html[data-theme="dark"] .fu-theme-scope img,
+html[data-theme="dark"] .fu-theme-scope video,
+html[data-theme="dark"] .fu-theme-scope canvas {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ── Animations ────────────────────────────────────────── */
+@keyframes toastIn {
+  from { opacity:0; transform:translateY(10px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes slideIn {
+  from { opacity:0; transform:translateY(-5px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes spin {
+  from { transform:rotate(0deg); }
+  to   { transform:rotate(360deg); }
+}
+@keyframes pulse-dot {
+  0%,100% { transform:scale(1);  opacity:1; }
+  50%      { transform:scale(1.5); opacity:.6; }
+}
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes glow-pulse {
+  0%,100% { opacity:.5; }
+  50%      { opacity:1; }
+}
+@keyframes border-spin {
+  from { --angle: 0deg; }
+  to   { --angle: 360deg; }
+}
+@keyframes float {
+  0%,100% { transform:translateY(0px); }
+  50%      { transform:translateY(-6px); }
+}
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.shimmer {
+  background: linear-gradient(90deg,transparent 0%,rgba(0,0,0,.04) 50%,transparent 100%);
+  background-size: 400px 100%;
+  animation: shimmer 1.6s ease infinite;
+}
+.fade-up { animation: fadeUp .22s ease both; }
+.float   { animation: float 3s ease-in-out infinite; }
