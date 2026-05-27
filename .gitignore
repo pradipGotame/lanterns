@@ -69,7 +69,6 @@ backend/projects/
 backend/indices/
 backend/traceability/_live/
 replication-package/build/
-reports/
 *.sqlite
 *.sqlite3
 *.db
